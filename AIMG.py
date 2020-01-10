@@ -1,0 +1,335 @@
+import os
+import cv2
+import sys
+import shutil
+import glob
+import math
+import warnings
+import numpy as np
+from PIL import Image
+from multiprocessing.dummy import Pool as ThreadPool
+from multiprocessing import cpu_count
+from PySide2.QtCore import *
+from PySide2.QtGui import *
+from PySide2.QtWidgets import *
+
+
+Image.MAX_IMAGE_PIXELS = None
+warnings.simplefilter('ignore')
+
+
+class K_means:
+
+    def __init__(self, k=2, size=False, resample=128):
+        self.k = k
+        self.cluster = []
+        self.data = []
+        self.end = []
+        self.i = 0
+        self.size = size
+        self.resample = resample
+
+    def manhattan_distance(self, x1, x2):
+        s = 0.0
+        for i in range(len(x1)):
+            s += abs(float(x1[i]) - float(x2[i]))
+        return s
+
+    def euclidian_distance(self, x1, x2):
+        s = 0.0
+        for i in range(len(x1)):
+            s += math.sqrt((float(x1[i]) - float(x2[i])) ** 2)
+        return s
+
+    def read_image(self, im):
+        if self.i >= self.k:
+            self.i = 0
+        try:
+            img = Image.open(im)
+            osize = img.size
+            img.thumbnail((self.resample, self.resample))
+            v = [float(p) / float(img.size[0] * img.size[1]) * 100 for p in np.histogram(np.asarray(img))[0]]
+            if self.size:
+                v += [osize[0], osize[1]]
+            i = self.i
+            self.i += 1
+            return [i, v, im]
+        except Exception as e:
+            print("Error reading ", im, e)
+            return [None, None, None]
+
+    def generate_k_means(self):
+        final_mean = []
+        for c in range(self.k):
+            partial_mean = []
+            for i in range(len(self.data[0])):
+                s = 0.0
+                t = 0
+                for j in range(len(self.data)):
+                    if self.cluster[j] == c:
+                        s += self.data[j][i]
+                        t += 1
+                if t != 0:
+                    partial_mean.append(float(s) / float(t))
+                else:
+                    partial_mean.append(float('inf'))
+            final_mean.append(partial_mean)
+        return final_mean
+
+    def generate_k_clusters(self, folder):
+        pool = ThreadPool(cpu_count())
+        result = pool.map(self.read_image, folder)
+        pool.close()
+        pool.join()
+        self.cluster = [r[0] for r in result if r[0] != None]
+        self.data = [r[1] for r in result if r[1] != None]
+        self.end = [r[2] for r in result if r[2] != None]
+
+    def rearrange_clusters(self):
+        isover = False
+        while (not isover):
+            isover = True
+            m = self.generate_k_means()
+            for x in range(len(self.cluster)):
+                dist = []
+                for a in range(self.k):
+                    dist.append(self.manhattan_distance(self.data[x], m[a]))
+                _mindist = dist.index(min(dist))
+                if self.cluster[x] != _mindist:
+                    self.cluster[x] = _mindist
+                    isover = False
+
+
+class groupImgGUI(QWidget):
+
+    def __init__(self, parent=None):
+        super(groupImgGUI, self).__init__(parent)
+        self.dir = None
+        self.img_processed = False
+
+
+        self.progressValue = 0
+        self.createSettings()
+        self.editSettings()
+        layout = QVBoxLayout()
+
+        self.btn = QPushButton("Select folder")
+        self.btn.clicked.connect(self.selectFolder)
+        self.check = QCheckBox("Settings")
+        self.check.stateChanged.connect(self.state)
+        self.check2 = QCheckBox("Edit")
+        self.check2.stateChanged.connect(self.state2)
+        self.runbtn = QPushButton("Run")
+        self.runbtn.clicked.connect(self.run)
+        self.progress = QProgressBar(self)
+        self.progress.hide()
+        layout.addWidget(self.btn)
+
+
+        layout.addWidget(self.check)
+        layout.addWidget(self.check2)
+        layout.addWidget(self.formGroupBox)
+
+
+
+        layout.addWidget(self.progress)
+        layout.addWidget(self.runbtn)
+        self.setMinimumSize(300, 300)
+        self.setLayout(layout)
+        self.setWindowTitle("groupImg - GUI")
+
+    def createSettings(self):
+        self.formGroupBox = QGroupBox("Settings")
+        layout = QFormLayout()
+        self.kmeans = QSpinBox()
+        self.kmeans.setRange(2, 15)
+        self.kmeans.setValue(2)
+        self.sample = QSpinBox()
+        self.sample.setRange(32, 256)
+        self.sample.setValue(128)
+        self.sample.setSingleStep(2)
+        self.move = QCheckBox()
+        self.size = QCheckBox()
+        layout.addRow(QLabel("N. Groups:"), self.kmeans)
+        layout.addRow(QLabel("Resample:"), self.sample)
+        layout.addRow(QLabel("Move:"), self.move)
+        layout.addRow(QLabel("Size:"), self.size)
+        self.formGroupBox.hide()
+        self.formGroupBox.setLayout(layout)
+
+    def selectFolder(self):
+        QFileDialog.FileMode(QFileDialog.Directory)
+        self.dir = QFileDialog.getExistingDirectory(self)
+        self.btn.setText(self.dir or "Select folder")
+
+
+
+    def state(self):
+        if self.check.isChecked():
+            self.formGroupBox.show()
+        else:
+            self.formGroupBox.hide()
+
+
+
+
+    def state2(self):
+        if self.check2.isChecked():
+            self.formGroupBox2.show()
+        else:
+            self.formGroupBox2.hide()
+
+    def editSettings(self):
+
+        self.formGroupBox2 = QGroupBox("Edit")
+        self.img = QPushButton('Open Image')
+        layout2 = QFormLayout()
+        hbox_address = QHBoxLayout()
+        self.address = QLineEdit()
+        hbox_address.addWidget(self.address)
+        self.inp = QLineEdit()
+        self.img.clicked.connect(self.open)
+
+        hbox_size = QHBoxLayout()
+        self.label_width = QLabel('Width :')
+        self.label_height = QLabel('Height :')
+        self.et_width = QLineEdit()
+        self.et_height = QLineEdit()
+        hbox_size.addWidget(self.label_width)
+        hbox_size.addWidget(self.et_width)
+        hbox_size.addWidget(self.label_height)
+        hbox_size.addWidget(self.et_height)
+
+        hbox_colorscale = QHBoxLayout()
+        self.color_scale = QLabel('Color Scale :')
+        self.Grey_scale = QRadioButton('Grey', self)
+        self.Hsv = QRadioButton('HSV ', self)
+        hbox_colorscale.addWidget(self.color_scale)
+        hbox_colorscale.addWidget(self.Grey_scale)
+        hbox_colorscale.addWidget(self.Hsv)
+
+        hbox_save = QHBoxLayout()
+        self.address_save = QLineEdit()
+        hbox_save.addWidget(self.address_save)
+        self.btn_save = QPushButton('Save Image')
+        self.btn_save.clicked.connect(self.save)
+        hbox_save.addWidget(self.btn_save)
+
+        self.img_processed = False
+        self.btn_process_img = QPushButton("Process Image")
+        self.btn_process_img.clicked.connect(self.getInput)
+        hbox_btn = QHBoxLayout()
+        hbox_btn.addWidget(self.btn_process_img)
+
+
+        layout2.addRow(self.img, self.address)
+        layout2.addRow(self.label_height , self.et_height)
+        layout2.addRow(self.label_width, self.et_width)
+        layout2.addRow(self.color_scale)
+        layout2.addRow(self.Grey_scale, self.Hsv)
+        layout2.addRow(self.btn_process_img)
+        layout2.addRow(self.btn_save)
+
+
+
+        self.formGroupBox2.hide()
+        self.formGroupBox2.setLayout(layout2)
+
+        # @pyqtSlot()
+
+    def getInput(self):
+        self.req_height = self.et_height.text()
+        self.req_width = self.et_width.text()
+        if self.req_width != '' and self.req_height != '':
+            self.ready = True
+            self.img_processed = True
+        else:
+            self.ready = False
+
+        if self.ready is False:
+            QMessageBox.about(self, 'Error', 'Fill parameters to process')
+        elif self.address.text() is '':
+            QMessageBox.about(self, 'Error', 'Select Image to process')
+        else:
+            self.req_img = self.process_img(cv2.imread(self.address.text()))
+            cv2.imshow("req_img", self.req_img)
+
+        # print(self.req_height,self.req_width)
+
+    def process_img(self, imgtoproc):
+        if self.Grey_scale.isChecked():
+            imgtoproc = cv2.cvtColor(imgtoproc, cv2.COLOR_BGR2GRAY)
+        elif self.Hsv.isChecked():
+            imgtoproc = cv2.cvtColor(imgtoproc, cv2.COLOR_BGR2HSV)
+
+        return cv2.resize(imgtoproc, (int(self.req_width), int(self.req_height)))
+
+    def open(self):
+        fileName = QFileDialog.getOpenFileName(self, 'openFile')
+        self.address.setText(fileName[0])
+        self.showImage(fileName[0])
+        # print(fileName)
+
+
+    def showImage(self,address):
+        img = cv2.imread(address)
+        cv2.imshow('Yo',img)
+
+    def save(self):
+        if self.img_processed:
+            saveFile = QFileDialog.getSaveFileName(self, 'saveFile')
+            self.address_save.setText(saveFile[0])
+            if saveFile[0] != '':
+                cv2.imwrite(str(self.address_save.text()), self.req_img)
+        else:
+            QMessageBox.about(self, 'Suggestion', 'Do Something')
+
+    def disableButton(self):
+        self.runbtn.setText("Working...")
+        self.runbtn.setEnabled(False)
+
+    def enableButton(self):
+        self.runbtn.setText("Run")
+        self.runbtn.setEnabled(True)
+
+    def run(self):
+        self.disableButton()
+        types = ('*.jpg', '*.JPG', '*.png', '*.jpeg')
+        imagePaths = []
+        folder = self.dir
+        if not folder.endswith("/"):
+            folder += "/"
+        for files in types:
+            imagePaths.extend(sorted(glob.glob(folder + files)))
+        nimages = len(imagePaths)
+        nfolders = int(math.log(self.kmeans.value(), 10)) + 1
+        if nimages <= 0:
+            QMessageBox.warning(self, "Error", 'No images found!')
+            self.enableButton()
+            return
+        k = K_means(self.kmeans.value(), self.size.isChecked(), self.sample.value())
+        k.generate_k_clusters(imagePaths)
+        k.rearrange_clusters()
+        for i in range(k.k):
+            try:
+                os.makedirs(folder + str(i + 1).zfill(nfolders))
+            except Exception as e:
+                print("Folder already exists", e)
+        action = shutil.copy
+        if self.move.isChecked():
+            action = shutil.move
+        for i in range(len(k.cluster)):
+            action(k.end[i], folder + "/" + str(k.cluster[i] + 1).zfill(nfolders) + "/")
+        QMessageBox.information(self, "Done", 'Done!')
+        self.enableButton()
+
+
+def main():
+    app = QApplication(sys.argv)
+    groupimg = groupImgGUI()
+    groupimg.show()
+    sys.exit(app.exec_())
+
+
+if __name__ == '__main__':
+    main()
