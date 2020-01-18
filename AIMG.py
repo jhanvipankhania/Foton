@@ -12,6 +12,10 @@ from multiprocessing import cpu_count
 from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
+from PySide2.QtWidgets import QApplication, QWidget, QLabel
+from PySide2.QtGui import QIcon, QPixmap
+
+
 
 
 Image.MAX_IMAGE_PIXELS = None
@@ -106,56 +110,54 @@ class groupImgGUI(QWidget):
         super(groupImgGUI, self).__init__(parent)
         self.dir = None
         self.img_processed = False
+        self.width = 400
+        self.height = 300
 
-
-        self.progressValue = 0
         self.createSettings()
         self.editSettings()
+        self.nextFeatures()
         layout = QVBoxLayout()
 
-        self.btn = QPushButton("Select folder")
-        self.btn.clicked.connect(self.selectFolder)
-        self.check = QCheckBox("Settings")
-        self.check.stateChanged.connect(self.state)
-        self.check2 = QCheckBox("Edit")
-        self.check2.stateChanged.connect(self.state2)
-        self.runbtn = QPushButton("Run")
-        self.runbtn.clicked.connect(self.run)
-        self.progress = QProgressBar(self)
-        self.progress.hide()
-        layout.addWidget(self.btn)
+        self.b1 = QPushButton("Start")
+        self.b1.setCheckable(True)
+        self.b1.toggle()
+        self.b1.clicked.connect(self.state3)
 
+        self.label = QLabel(self)
+        self.label.setPixmap(QPixmap('image.jpeg'))
+        self.label.setGeometry(0, 0, 400, 300) #left, top, width, height
 
-        layout.addWidget(self.check)
-        layout.addWidget(self.check2)
-        layout.addWidget(self.formGroupBox)
+        layout.addWidget(self.formGroupBox3)
 
-
-
-        layout.addWidget(self.progress)
-        layout.addWidget(self.runbtn)
-        self.setMinimumSize(300, 300)
+        layout.addWidget(self.b1)
+        self.setMinimumSize(400, 300)
         self.setLayout(layout)
-        self.setWindowTitle("groupImg - GUI")
+        self.setWindowTitle("Foton")
 
-    def createSettings(self):
-        self.formGroupBox = QGroupBox("Settings")
-        layout = QFormLayout()
-        self.kmeans = QSpinBox()
-        self.kmeans.setRange(2, 15)
-        self.kmeans.setValue(2)
-        self.sample = QSpinBox()
-        self.sample.setRange(32, 256)
-        self.sample.setValue(128)
-        self.sample.setSingleStep(2)
-        self.move = QCheckBox()
-        self.size = QCheckBox()
-        layout.addRow(QLabel("N. Groups:"), self.kmeans)
-        layout.addRow(QLabel("Resample:"), self.sample)
-        layout.addRow(QLabel("Move:"), self.move)
-        layout.addRow(QLabel("Size:"), self.size)
-        self.formGroupBox.hide()
-        self.formGroupBox.setLayout(layout)
+
+    def nextFeatures(self):
+        self.formGroupBox3 = QGroupBox("Foton")
+
+
+        self.btn2 = QPushButton("Image Grouping")
+        self.btn2.setCheckable(False)
+        self.btn2.toggle()
+        self.btn2.clicked.connect(self.state)
+        self.btn3 = QPushButton("Edit")
+        self.btn3.setCheckable(False)
+        self.btn3.toggle()
+        self.btn3.clicked.connect(self.state2)
+
+
+        vbox = QVBoxLayout()
+        self.formGroupBox3.hide()
+        self.formGroupBox3.setLayout(vbox)
+
+        vbox.addWidget(self.btn2)
+        vbox.addWidget(self.btn3)
+        vbox.addStretch(0)
+
+
 
     def selectFolder(self):
         QFileDialog.FileMode(QFileDialog.Directory)
@@ -165,19 +167,59 @@ class groupImgGUI(QWidget):
 
 
     def state(self):
-        if self.check.isChecked():
-            self.formGroupBox.show()
-        else:
+        if self.btn2.isChecked():
             self.formGroupBox.hide()
+        else:
+            self.formGroupBox.show()
 
 
 
 
     def state2(self):
-        if self.check2.isChecked():
-            self.formGroupBox2.show()
-        else:
+        if self.btn3.isChecked():
             self.formGroupBox2.hide()
+        else:
+            self.formGroupBox2.show()
+
+
+    def state3(self):
+        if self.b1.isChecked():
+            self.formGroupBox3.show()
+            self.b1.hide()
+
+        else:
+            self.formGroupBox3.hide()
+
+
+    def createSettings(self):
+        self.formGroupBox = QGroupBox("Settings")
+        flayout = QFormLayout()
+        self.formGroupBox.hide()
+        self.formGroupBox.setLayout(flayout)
+        self.btn = QPushButton("Select folder")
+        self.btn.clicked.connect(self.selectFolder)
+        self.kmeans = QSpinBox()
+        self.kmeans.setRange(2, 15)
+        self.kmeans.setValue(2)
+        self.sample = QSpinBox()
+        self.sample.setRange(32, 256)
+        self.sample.setValue(128)
+        self.sample.setSingleStep(2)
+        self.move = QCheckBox()
+        self.size = QCheckBox()
+        self.runbtn = QPushButton("Run")
+        self.runbtn.clicked.connect(self.run)
+        flayout.addRow(self.btn)
+        flayout.addRow(QLabel("N. Groups:"), self.kmeans)
+        flayout.addRow(QLabel("Resample:"), self.sample)
+        flayout.addRow(QLabel("Move:"), self.move)
+        flayout.addRow(QLabel("Size:"), self.size)
+        flayout.addRow(self.runbtn)
+
+
+
+
+
 
     def editSettings(self):
 
