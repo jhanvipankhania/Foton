@@ -8,7 +8,7 @@ from tkinter import Canvas, Tk, Label, LEFT, Frame, filedialog, messagebox
 from settings import DEFAULT_ACTION_NAMES, DEFAULT_ALLOWED_EXTENSIONS, DEFAULT_BACKGROUND_COLOR, SOURCE_DIRECTORY
 
 
-TOP_BUTTON_HEIGHT = 120  # for the buttons
+TOP_BUTTON_HEIGHT = 150  # for the buttons
 MARGIN_BOTTOM = 120  # when there is no margin at the bottom, I can't be sure if the image really stops there
 MARGIN_LEFT_RIGHT = 120
 
@@ -103,7 +103,7 @@ class ImageViewer(Canvas):
 
         self.last_actions = []
 
-        self.image_counter_label = Label(self.top_frame, font=('Helvetica', 16), fg="grey")
+        self.image_counter_label = Label(self.top_frame, font=('ms serif', 16), fg="grey")
         self.image_counter_label.pack(side=LEFT)
         self.show_image()
 
@@ -135,7 +135,7 @@ class ImageViewer(Canvas):
             action_dir_path = make_directory(base_path=self.directory_path, directory_name=action_label)
             self.action_destination_dirs.append(action_dir_path)
 
-            setattr(self, action_label, Label(self.top_frame, text='  {}  '.format(action_label.upper()), font=('Helvetica', 15), fg="black"))
+            setattr(self, action_label, Label(self.top_frame, text='  {}  '.format(action_label.upper()), font=('ms serif', 15), fg="black"))
             tk_label = getattr(self, action_label)
             getattr(tk_label, 'pack')(side=LEFT)
 
