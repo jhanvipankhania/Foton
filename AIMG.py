@@ -1,3 +1,5 @@
+from typing import Any
+
 import os
 import cv2
 import sys
@@ -17,8 +19,19 @@ from PySide2.QtGui import QIcon, QPixmap
 
 from time import sleep
 
+from PIL import Image, ImageTk
+from tkinter import Canvas, Tk, Label, LEFT, Frame, filedialog, messagebox
 
+# from settings import DEFAULT_ACTION_NAMES, DEFAULT_ALLOWED_EXTENSIONS, DEFAULT_BACKGROUND_COLOR, SOURCE_DIRECTORY
 
+TOP_BUTTON_HEIGHT = 50  # for the buttons
+MARGIN_BOTTOM = 70  # when there is no margin at the bottom, I can't be sure if the image really stops there
+MARGIN_LEFT_RIGHT = 10
+
+DEFAULT_ACTION_NAMES = ['delete', 'good']
+DEFAULT_ALLOWED_EXTENSIONS: Any = ['jpg', 'jpeg']
+DEFAULT_BACKGROUND_COLOR = 'black'
+SOURCE_DIRECTORY = None
 
 Image.MAX_IMAGE_PIXELS = None
 warnings.simplefilter('ignore')
@@ -107,7 +120,7 @@ class K_means:
 
 
 class groupImgGUI(QWidget):
-#--->MAIN WINDOW#
+    # --->MAIN WINDOW#
     def __init__(self, parent=None):
         super(groupImgGUI, self).__init__(parent)
         self.dir = None
@@ -115,29 +128,29 @@ class groupImgGUI(QWidget):
         self.width = 400
         self.height = 300
 
-        self.createSettings() #image grouping box
-        self.editSettings() #edit image box
-        #self.datasetSettings() #dataset box
-        self.nextFeatures() #total features list box
+        self.createSettings()  # image grouping box
+        self.editSettings()  # edit image box
+        # self.datasetSettings() #dataset box
+        self.nextFeatures()  # total features list box
         layout = QVBoxLayout()
 
         self.b1 = QPushButton("Start")
         self.b1.setCheckable(True)
         self.b1.toggle()
-        self.b1.clicked.connect(self.state3) #redirects to the tool function
+        self.b1.clicked.connect(self.state3)  # redirects to the tool function
 
         self.label = QLabel(self)
-        self.label.setPixmap(QPixmap('image4.png')) #bg image
-        self.label.setGeometry(0, 0, 400, 300) #left, top, width, height
+        self.label.setPixmap(QPixmap('image4.png'))  # bg image
+        self.label.setGeometry(0, 0, 400, 300)  # left, top, width, height
 
-        layout.addWidget(self.formGroupBox3) #redirects to another window
+        layout.addWidget(self.formGroupBox3)  # redirects to another window
 
-        layout.addWidget(self.b1) #intitialized button b1(start) onto the main window
+        layout.addWidget(self.b1)  # intitialized button b1(start) onto the main window
         self.setMinimumSize(400, 300)
-        self.setLayout(layout) #the main window
+        self.setLayout(layout)  # the main window
         self.setWindowTitle("Foton")
 
-#--->TOOL/FEATURE FUNCTION#
+    # --->TOOL/FEATURE FUNCTION#
     def state3(self):
         if self.b1.isChecked():
             self.formGroupBox3.show()
@@ -145,49 +158,54 @@ class groupImgGUI(QWidget):
         else:
             self.formGroupBox3.hide()
 
-#TOOL/FEATURE WINDOW#
+    # TOOL/FEATURE WINDOW#
     def nextFeatures(self):
         self.formGroupBox3 = QGroupBox("Tools")
         self.btn2 = QPushButton("Image Grouping")
         self.btn2.setCheckable(False)
         self.btn2.toggle()
-        self.btn2.clicked.connect(self.state) #redirects to its function 'state'
+        self.btn2.clicked.connect(self.state)  # redirects to its function 'state'
+
         self.btn3 = QPushButton("Edit")
         self.btn3.setCheckable(False)
         self.btn3.toggle()
-        self.btn3.clicked.connect(self.state2) #redirects to its function 'state2'
+        self.btn3.clicked.connect(self.state2)  # redirects to its function 'state2'
+
         self.btn4 = QPushButton("Dataset")
         self.btn4.setCheckable(False)
         self.btn4.toggle()
-        self.btn4.clicked.connect(self.state4)  # redirects to its function 'state3'
+        self.btn4.clicked.connect(self.state4)  # redirects to its function 'state4'
 
-        vbox = QVBoxLayout() #tools window
+        self.btn5 = QPushButton("Manual Image Sorting")
+        self.btn5.setCheckable(False)
+        self.btn5.toggle()
+        self.btn5.clicked.connect(self.state5)  # redirects to its function 'state5'
+
+        vbox = QVBoxLayout()  # tools window
         self.formGroupBox3.hide()
         self.formGroupBox3.setLayout(vbox)
 
         vbox.addWidget(self.btn2)
         vbox.addWidget(self.btn3)
         vbox.addWidget(self.btn4)
+        vbox.addWidget(self.btn5)
         vbox.addStretch(0)
 
-
-
-
-#--->IMAGE GROUPING FUNCTION#
+    # --->IMAGE GROUPING FUNCTION#
     def state(self):
         if self.btn2.isChecked():
-            self.formGroupBox.hide() #opens another window
+            self.formGroupBox.hide()  # opens another window
         else:
             self.formGroupBox.show()
 
-#IMAGE GROUPING WINDOW#
-    def createSettings(self): #image grouping window
+    # IMAGE GROUPING WINDOW#
+    def createSettings(self):  # image grouping window
         self.formGroupBox = QGroupBox("Settings")
         flayout = QFormLayout()
         self.formGroupBox.hide()
         self.formGroupBox.setLayout(flayout)
         self.btn = QPushButton("Select folder")
-        self.btn.clicked.connect(self.selectFolder) #redirects to select folder function
+        self.btn.clicked.connect(self.selectFolder)  # redirects to select folder function
         self.kmeans = QSpinBox()
         self.kmeans.setRange(2, 15)
         self.kmeans.setValue(2)
@@ -206,13 +224,13 @@ class groupImgGUI(QWidget):
         flayout.addRow(QLabel("Size:"), self.size)
         flayout.addRow(self.runbtn)
 
-#SELECT FOLDER FUNCTION#
+    # SELECT FOLDER FUNCTION#
     def selectFolder(self):
         QFileDialog.FileMode(QFileDialog.Directory)
         self.dir = QFileDialog.getExistingDirectory(self)
         self.btn.setText(self.dir or "Select folder")
 
-#PROGRESS BUTTONS FUNCTION#
+    # PROGRESS BUTTONS FUNCTION#
     def disableButton(self):
         self.runbtn.setText("Working...")
         self.runbtn.setEnabled(False)
@@ -252,15 +270,14 @@ class groupImgGUI(QWidget):
         QMessageBox.information(self, "Done", 'Done!')
         self.enableButton()
 
-
-
-#--->EDIT FUNCTION#
+    # --->EDIT FUNCTION#
     def state2(self):
-         if self.btn3.isChecked():
-             self.formGroupBox2.hide()
-         else:
-             self.formGroupBox2.show()
-#EDIT WINDOW#
+        if self.btn3.isChecked():
+            self.formGroupBox2.hide()
+        else:
+            self.formGroupBox2.show()
+
+    # EDIT WINDOW#
     def editSettings(self):
 
         self.formGroupBox2 = QGroupBox("Edit")
@@ -299,12 +316,12 @@ class groupImgGUI(QWidget):
 
         self.img_processed = False
         self.btn_process_img = QPushButton("Process Image")
-        self.btn_process_img.clicked.connect(self.getInput) #redirects to getinput function
+        self.btn_process_img.clicked.connect(self.getInput)  # redirects to getinput function
         hbox_btn = QHBoxLayout()
         hbox_btn.addWidget(self.btn_process_img)
 
         layout2.addRow(self.img, self.address)
-        layout2.addRow(self.label_height , self.et_height)
+        layout2.addRow(self.label_height, self.et_height)
         layout2.addRow(self.label_width, self.et_width)
         layout2.addRow(self.color_scale)
         layout2.addRow(self.Grey_scale, self.Hsv)
@@ -314,7 +331,7 @@ class groupImgGUI(QWidget):
         self.formGroupBox2.hide()
         self.formGroupBox2.setLayout(layout2)
 
-#GETINPUT FUNCTION#
+    # GETINPUT FUNCTION#
     def getInput(self):
         self.req_height = self.et_height.text()
         self.req_width = self.et_width.text()
@@ -333,7 +350,7 @@ class groupImgGUI(QWidget):
             cv2.imshow("req_img", self.req_img)
         # print(self.req_height,self.req_width)
 
-#IMAGE PROCESS FUNCTION#
+    # IMAGE PROCESS FUNCTION#
     def process_img(self, imgtoproc):
         if self.Grey_scale.isChecked():
             imgtoproc = cv2.cvtColor(imgtoproc, cv2.COLOR_BGR2GRAY)
@@ -342,19 +359,19 @@ class groupImgGUI(QWidget):
 
         return cv2.resize(imgtoproc, (int(self.req_width), int(self.req_height)))
 
-#OPEN IMAGE FUNCTION#
+    # OPEN IMAGE FUNCTION#
     def open(self):
         fileName = QFileDialog.getOpenFileName(self, 'openFile')
         self.address.setText(fileName[0])
         self.showImage(fileName[0])
         # print(fileName)
 
-#SHOWIMAGE FUNCTION#
-    def showImage(self,address):
+    # SHOWIMAGE FUNCTION#
+    def showImage(self, address):
         img = cv2.imread(address)
-        cv2.imshow('Yo',img)
+        cv2.imshow('Yo', img)
 
-#SAVE IMAGE FUNCTION#
+    # SAVE IMAGE FUNCTION#
     def save(self):
         if self.img_processed:
             saveFile = QFileDialog.getSaveFileName(self, 'saveFile')
@@ -364,36 +381,40 @@ class groupImgGUI(QWidget):
         else:
             QMessageBox.about(self, 'Suggestion', 'Do Something')
 
-
-#--->DATASET FUNCTION#
+    # --->DATASET FUNCTION#
     def state4(self):
-            cam = cv2.VideoCapture(0)
-            cv2.namedWindow("test")
-            img_counter = 0
+        cam = cv2.VideoCapture(0)
+        cv2.namedWindow("test")
+        img_counter = 0
 
-            while True:
-                ret, frame = cam.read()
-                cv2.imshow("test", frame)
-                if not ret:
-                    break
-                k = cv2.waitKey(1)
+        while True:
+            ret, frame = cam.read()
+            cv2.imshow("test", frame)
+            if not ret:
+                break
+            k = cv2.waitKey(1)
 
-                if k % 256 == 27:
-                    # ESC pressed
-                    print("Escape hit, closing...")
-                    break
-                elif k % 256 == 32:
-                    # SPACE pressed
-                    img_name = "opencv_frame_{}.png".format(img_counter)
-                    cv2.imwrite(img_name, frame)
-                    print("{} written!".format(img_name))
-                    img_counter += 1
+            if k % 256 == 27:
+                # ESC pressed
+                print("Escape hit, closing...")
+                break
+            elif k % 256 == 32:
+                # SPACE pressed
+                img_name = "opencv_frame_{}.png".format(img_counter)
+                cv2.imwrite(img_name, frame)
+                print("{} written!".format(img_name))
+                img_counter += 1
 
-            cam.release()
-            cv2.destroyAllWindows()
+        cam.release()
+        cv2.destroyAllWindows()
 
+    # -->FACE CLASSIFICATION
 
-
+    def state5(self):
+        #exec(open('image_viewer.py').read())
+        #import image_viewer
+        #image_viewer.main()
+        os.system('python image_viewer.py')
 
 
 
