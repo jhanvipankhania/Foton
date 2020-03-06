@@ -132,6 +132,7 @@ class groupImgGUI(QWidget):
         self.editSettings()  # edit image box
         # self.datasetSettings() #dataset box
         self.nextFeatures()  # total features list box
+        self.manual()
         layout = QVBoxLayout()
 
         self.b1 = QPushButton("Start")
@@ -408,9 +409,28 @@ class groupImgGUI(QWidget):
         cam.release()
         cv2.destroyAllWindows()
 
-    # -->FACE CLASSIFICATION
+    # -->MANUALSORTING
 
     def state5(self):
+        if self.btn5.isChecked():
+            self.formGroupBox5.hide()
+        else:
+            self.formGroupBox5.show()
+
+    def manual(self):
+        self.formGroupBox5 = QGroupBox("Manual Sorting")
+        layout5 = QFormLayout()
+        self.btn5 = QPushButton("Start")
+        self.label = QLabel('\nInstructions to perform manual image sorting:\n\n • Kindly Press 1 to transfer the image into BRIDE folder\n\n • Kindly Press 2 to transfer the image into GROOM folder')
+        self.btn5.setCheckable(False)
+        self.btn5.toggle()
+        self.btn5.clicked.connect(self.state6)  # redirects to its function 'state6'
+        layout5.addRow(self.btn5)
+        layout5.addRow(self.label)
+        self.formGroupBox5.hide()
+        self.formGroupBox5.setLayout(layout5)
+
+    def state6(self):
         #exec(open('image_viewer.py').read())
         #import image_viewer
         #image_viewer.main()
