@@ -133,6 +133,7 @@ class groupImgGUI(QWidget):
         # self.datasetSettings() #dataset box
         self.nextFeatures()  # total features list box
         self.manual()
+        self.facerecog()
         layout = QVBoxLayout()
 
         self.b1 = QPushButton("Start")
@@ -182,6 +183,11 @@ class groupImgGUI(QWidget):
         self.btn5.toggle()
         self.btn5.clicked.connect(self.state5)  # redirects to its function 'state5'
 
+        self.btn6 = QPushButton("Face Identifier")
+        self.btn6.setCheckable(False)
+        self.btn6.toggle()
+        self.btn6.clicked.connect(self.state7)  # redirects to its function 'state5'
+
         vbox = QVBoxLayout()  # tools window
         self.formGroupBox3.hide()
         self.formGroupBox3.setLayout(vbox)
@@ -190,6 +196,7 @@ class groupImgGUI(QWidget):
         vbox.addWidget(self.btn3)
         vbox.addWidget(self.btn4)
         vbox.addWidget(self.btn5)
+        vbox.addWidget(self.btn6)
         vbox.addStretch(0)
 
     # --->IMAGE GROUPING FUNCTION#
@@ -384,6 +391,8 @@ class groupImgGUI(QWidget):
 
     # --->DATASET FUNCTION#
     def state4(self):
+
+
         cam = cv2.VideoCapture(0)
         cv2.namedWindow("test")
         img_counter = 0
@@ -435,6 +444,44 @@ class groupImgGUI(QWidget):
         #import image_viewer
         #image_viewer.main()
         os.system('python image_viewer.py')
+
+    def state7(self):
+        if self.btn6.isChecked():
+            self.formGroupBox7.hide()
+        else:
+            self.formGroupBox7.show()
+
+    def facerecog(self):
+        self.formGroupBox7 = QGroupBox("Face Identifier")
+        layout7 = QFormLayout()
+        self.btn7 = QPushButton("Collect New Dataset")
+        self.btn7.setCheckable(False)
+        self.btn7.toggle()
+        self.btn7.clicked.connect(self.datacollect)
+        self.btn8 = QPushButton("Train Dataset")
+        self.btn8.setCheckable(False)
+        self.btn8.toggle()
+        self.btn8.clicked.connect(self.datalearning)
+        self.btn9 = QPushButton("Identify Face")
+        self.btn9.setCheckable(False)
+        self.btn9.toggle()
+        self.btn9.clicked.connect(self.recognize)
+        layout7.addRow(self.btn7)
+        layout7.addRow(self.btn8)
+        layout7.addRow(self.btn9)
+
+        #layout7.addRow(self.labell)
+        self.formGroupBox7.hide()
+        self.formGroupBox7.setLayout(layout7)
+
+    def datacollect(self):
+        os.system('python datacollecting.py')
+
+    def datalearning(self):
+        os.system('python datalearning.py')
+
+    def recognize(self):
+        os.system('python recognizer.py')
 
 
 
