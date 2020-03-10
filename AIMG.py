@@ -1,4 +1,4 @@
-from typing import Any
+#from typing import Any
 
 import os
 import cv2
@@ -16,27 +16,13 @@ from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 from PySide2.QtWidgets import QApplication, QWidget, QLabel
 from PySide2.QtGui import QIcon, QPixmap
-
 from time import sleep
-
 from PIL import Image, ImageTk
 from tkinter import Canvas, Tk, Label, LEFT, Frame, filedialog, messagebox
 
-# from settings import DEFAULT_ACTION_NAMES, DEFAULT_ALLOWED_EXTENSIONS, DEFAULT_BACKGROUND_COLOR, SOURCE_DIRECTORY
 
-TOP_BUTTON_HEIGHT = 50  # for the buttons
-MARGIN_BOTTOM = 70  # when there is no margin at the bottom, I can't be sure if the image really stops there
-MARGIN_LEFT_RIGHT = 10
-
-DEFAULT_ACTION_NAMES = ['delete', 'good']
-DEFAULT_ALLOWED_EXTENSIONS: Any = ['jpg', 'jpeg']
-DEFAULT_BACKGROUND_COLOR = 'black'
-SOURCE_DIRECTORY = None
-
-Image.MAX_IMAGE_PIXELS = None
-warnings.simplefilter('ignore')
-
-
+#----------------------------------------------------KMEANS--------------------------------------------------------------------------------------
+#------------------------------------------------------ALGORITHM------------------------------------------------------------------------------------------
 class K_means:
 
     def __init__(self, k=2, size=False, resample=128):
@@ -120,17 +106,16 @@ class K_means:
 
 
 class groupImgGUI(QWidget):
-    # --->MAIN WINDOW#
+    # ----------------------------------------------------MAIN--------------------------------------------------------------------------------------
+    # ------------------------------------------------------WINDOW------------------------------------------------------------------------------------------
     def __init__(self, parent=None):
         super(groupImgGUI, self).__init__(parent)
         self.dir = None
         self.img_processed = False
         self.width = 400
         self.height = 300
-
         self.createSettings()  # image grouping box
         self.editSettings()  # edit image box
-        # self.datasetSettings() #dataset box
         self.nextFeatures()  # total features list box
         self.manual()
         self.facerecog()
@@ -146,13 +131,13 @@ class groupImgGUI(QWidget):
         self.label.setGeometry(0, 0, 400, 300)  # left, top, width, height
 
         layout.addWidget(self.formGroupBox3)  # redirects to another window
-
         layout.addWidget(self.b1)  # intitialized button b1(start) onto the main window
         self.setMinimumSize(400, 300)
         self.setLayout(layout)  # the main window
         self.setWindowTitle("Foton")
 
-    # --->TOOL/FEATURE FUNCTION#
+    # ----------------------------------------------------START--------------------------------------------------------------------------------------
+    # ------------------------------------------------------FUNCTION------------------------------------------------------------------------------------------
     def state3(self):
         if self.b1.isChecked():
             self.formGroupBox3.show()
@@ -160,29 +145,26 @@ class groupImgGUI(QWidget):
         else:
             self.formGroupBox3.hide()
 
-    # TOOL/FEATURE WINDOW#
+    # ----------------------------------------------------FEATURES--------------------------------------------------------------------------------------
+    # ------------------------------------------------------WINDOW------------------------------------------------------------------------------------------
     def nextFeatures(self):
         self.formGroupBox3 = QGroupBox("Tools")
         self.btn2 = QPushButton("Image Grouping")
         self.btn2.setCheckable(False)
         self.btn2.toggle()
         self.btn2.clicked.connect(self.state)  # redirects to its function 'state'
-
         self.btn3 = QPushButton("Edit")
         self.btn3.setCheckable(False)
         self.btn3.toggle()
         self.btn3.clicked.connect(self.state2)  # redirects to its function 'state2'
-
         self.btn4 = QPushButton("Dataset")
         self.btn4.setCheckable(False)
         self.btn4.toggle()
         self.btn4.clicked.connect(self.state4)  # redirects to its function 'state4'
-
         self.btn5 = QPushButton("Manual Image Sorting")
         self.btn5.setCheckable(False)
         self.btn5.toggle()
         self.btn5.clicked.connect(self.state5)  # redirects to its function 'state5'
-
         self.btn6 = QPushButton("Face Identifier")
         self.btn6.setCheckable(False)
         self.btn6.toggle()
@@ -191,7 +173,6 @@ class groupImgGUI(QWidget):
         vbox = QVBoxLayout()  # tools window
         self.formGroupBox3.hide()
         self.formGroupBox3.setLayout(vbox)
-
         vbox.addWidget(self.btn2)
         vbox.addWidget(self.btn3)
         vbox.addWidget(self.btn4)
@@ -199,14 +180,17 @@ class groupImgGUI(QWidget):
         vbox.addWidget(self.btn6)
         vbox.addStretch(0)
 
-    # --->IMAGE GROUPING FUNCTION#
+
+    # ----------------------------------------------------IMAGE GROUPING--------------------------------------------------------------------------------------
+    # ------------------------------------------------------FUNCTION------------------------------------------------------------------------------------------
     def state(self):
         if self.btn2.isChecked():
             self.formGroupBox.hide()  # opens another window
         else:
             self.formGroupBox.show()
 
-    # IMAGE GROUPING WINDOW#
+    # ----------------------------------------------------IMAGE GROUPING-------------------------------------------------------------------------------------
+    # ------------------------------------------------------WINDOW------------------------------------------------------------------------------------------
     def createSettings(self):  # image grouping window
         self.formGroupBox = QGroupBox("Settings")
         flayout = QFormLayout()
@@ -278,16 +262,18 @@ class groupImgGUI(QWidget):
         QMessageBox.information(self, "Done", 'Done!')
         self.enableButton()
 
-    # --->EDIT FUNCTION#
+
+    # ----------------------------------------------------EDIT--------------------------------------------------------------------------------------
+    # ------------------------------------------------------FUNCTION------------------------------------------------------------------------------------------
     def state2(self):
         if self.btn3.isChecked():
             self.formGroupBox2.hide()
         else:
             self.formGroupBox2.show()
 
-    # EDIT WINDOW#
+    # ----------------------------------------------------EDIT-------------------------------------------------------------------------------------
+    # ------------------------------------------------------WINDOW------------------------------------------------------------------------------------------
     def editSettings(self):
-
         self.formGroupBox2 = QGroupBox("Edit")
         self.img = QPushButton('Open Image')
         layout2 = QFormLayout()
@@ -296,7 +282,6 @@ class groupImgGUI(QWidget):
         hbox_address.addWidget(self.address)
         self.inp = QLineEdit()
         self.img.clicked.connect(self.open)
-
         hbox_size = QHBoxLayout()
         self.label_width = QLabel('Width :')
         self.label_height = QLabel('Height :')
@@ -306,7 +291,6 @@ class groupImgGUI(QWidget):
         hbox_size.addWidget(self.et_width)
         hbox_size.addWidget(self.label_height)
         hbox_size.addWidget(self.et_height)
-
         hbox_colorscale = QHBoxLayout()
         self.color_scale = QLabel('Color Scale :')
         self.Grey_scale = QRadioButton('Grey', self)
@@ -314,7 +298,6 @@ class groupImgGUI(QWidget):
         hbox_colorscale.addWidget(self.color_scale)
         hbox_colorscale.addWidget(self.Grey_scale)
         hbox_colorscale.addWidget(self.Hsv)
-
         hbox_save = QHBoxLayout()
         self.address_save = QLineEdit()
         hbox_save.addWidget(self.address_save)
@@ -389,10 +372,11 @@ class groupImgGUI(QWidget):
         else:
             QMessageBox.about(self, 'Suggestion', 'Do Something')
 
-    # --->DATASET FUNCTION#
+
+    # ----------------------------------------------------DATASET COLLECTION-------------------------------------------------------------------------------------
+    # --------------------------------------------------------FUNCTION------------------------------------------------------------------------------------------
+
     def state4(self):
-
-
         cam = cv2.VideoCapture(0)
         cv2.namedWindow("test")
         img_counter = 0
@@ -418,14 +402,17 @@ class groupImgGUI(QWidget):
         cam.release()
         cv2.destroyAllWindows()
 
-    # -->MANUALSORTING
 
+    # ----------------------------------------------------MANUAL SORTING-------------------------------------------------------------------------------------
+    # ------------------------------------------------------FUNCTION------------------------------------------------------------------------------------------
     def state5(self):
         if self.btn5.isChecked():
             self.formGroupBox5.hide()
         else:
             self.formGroupBox5.show()
 
+    # ----------------------------------------------------MANUAL SORTING-------------------------------------------------------------------------------------
+    # ------------------------------------------------------WINDOW------------------------------------------------------------------------------------------
     def manual(self):
         self.formGroupBox5 = QGroupBox("Manual Sorting")
         layout5 = QFormLayout()
@@ -439,18 +426,27 @@ class groupImgGUI(QWidget):
         self.formGroupBox5.hide()
         self.formGroupBox5.setLayout(layout5)
 
+
+    # ----------------------------------------------------MANUAL SORTING-------------------------------------------------------------------------------------
+    # ------------------------------------------------------FUNCTION------------------------------------------------------------------------------------------
     def state6(self):
         #exec(open('image_viewer.py').read())
         #import image_viewer
         #image_viewer.main()
         os.system('python image_viewer.py')
 
+
+
+    # ----------------------------------------------------FACE IDENTIFIER-------------------------------------------------------------------------------------
+    # ------------------------------------------------------FUNCTION------------------------------------------------------------------------------------------
     def state7(self):
         if self.btn6.isChecked():
             self.formGroupBox7.hide()
         else:
             self.formGroupBox7.show()
 
+    # ----------------------------------------------------FACE IDENTIFIER------------------------------------------------------------------------------------
+    # ------------------------------------------------------WINDOW------------------------------------------------------------------------------------------
     def facerecog(self):
         self.formGroupBox7 = QGroupBox("Face Identifier")
         layout7 = QFormLayout()
@@ -469,17 +465,19 @@ class groupImgGUI(QWidget):
         layout7.addRow(self.btn7)
         layout7.addRow(self.btn8)
         layout7.addRow(self.btn9)
-
         #layout7.addRow(self.labell)
         self.formGroupBox7.hide()
         self.formGroupBox7.setLayout(layout7)
 
+    #DATACOLLECTION
     def datacollect(self):
         os.system('python datacollecting.py')
 
+    #DATALEARNING
     def datalearning(self):
         os.system('python datalearning.py')
 
+    #TEST
     def recognize(self):
         os.system('python recognizer.py')
 
