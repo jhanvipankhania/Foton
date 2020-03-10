@@ -1,10 +1,8 @@
 import os
 import shutil
 import sys
-
 from PIL import Image, ImageTk
 from tkinter import Canvas, Tk, Label, LEFT, Frame, filedialog, messagebox
-
 from settings import DEFAULT_ACTION_NAMES, DEFAULT_ALLOWED_EXTENSIONS, DEFAULT_BACKGROUND_COLOR, SOURCE_DIRECTORY
 
 
@@ -36,14 +34,14 @@ def make_directory(base_path, directory_name):
 
     return new_dir_path
 
-
-def copy_to_clipboard(copy_text):
-    r = Tk()
-    r.withdraw()
-    # r.clipboard_clear()
-    r.clipboard_append(copy_text)
-    r.update()  # now it stays on the clipboard after the window is closed
-    # r.destroy()
+#
+# def copy_to_clipboard(copy_text):
+#     r = Tk()
+#     r.withdraw()
+#     # r.clipboard_clear()
+#     r.clipboard_append(copy_text)
+#     r.update()  # now it stays on the clipboard after the window is closed
+#     # r.destroy()
 
 
 class ImageViewer(Canvas):
@@ -75,9 +73,9 @@ class ImageViewer(Canvas):
         self.action_names = action_names
         self.action_counts = [0] * len(self.action_names)
         self.action_destination_dirs = []  # will be set in self.initialize_actions
-
         self.image_list = get_image_list(image_dir=self.directory_path, allowed_extensions=allowed_extensions)
 
+#assert- if the condition is true then the program continues successfully
         assert len(self.image_list) > 0, 'The folder {} contains no images of the format(s) "{}"'.format(
             self.directory_path, ', '.join(allowed_extensions))
 
@@ -85,10 +83,8 @@ class ImageViewer(Canvas):
         self['width'] = self.winfo_screenwidth()
         self['height'] = self.winfo_screenheight()
         self['bg'] = DEFAULT_BACKGROUND_COLOR
-
         self.top_frame = Frame(self.master, height=TOP_BUTTON_HEIGHT)
         self.top_frame.pack()
-
         self.initialize_actions()
 
         # self.master.bind('<Escape>', self._quit)
@@ -98,11 +94,9 @@ class ImageViewer(Canvas):
         # self.master.bind('<Control-c>', self.copy_image_name_to_clipboard)
         # # self.master.bind("<Configure>", self.on_resize)  # TODO: find a way to make resize window work nicely
 
-        self.total_images = len(self.image_list)
+        self.total_images = len(self.image_list) #total number of images displayed
         self.current_image_index = 0
-
-        self.last_actions = []
-
+        self.last_actions = [] #for the purpose of undo
         self.image_counter_label = Label(self.top_frame, font=('ms serif', 16), fg="grey")
         self.image_counter_label.pack(side=LEFT)
         self.show_image()
@@ -128,13 +122,12 @@ class ImageViewer(Canvas):
         """
         For every actions, there should be a corresponding directory.
         The label has to be made, and the event should be bind to a numeric key
-
-        :return:
         """
         for index, action_label in enumerate(self.action_names):
             action_dir_path = make_directory(base_path=self.directory_path, directory_name=action_label)
             self.action_destination_dirs.append(action_dir_path)
 
+#setattr() function sets the value of the attribute of an object.
             setattr(self, action_label, Label(self.top_frame, text='  {}  '.format(action_label.upper()), font=('ms serif', 15), fg="black"))
             tk_label = getattr(self, action_label)
             getattr(tk_label, 'pack')(side=LEFT)
@@ -166,30 +159,29 @@ class ImageViewer(Canvas):
             new_width = original_width
             new_height = original_height
 
-        # self.delete(self.find_withtag("bacl"))  # TODO, figure out if need this?
 
         new_x = int((max_width_image - new_width) / 2)
         new_y = int((TOP_BUTTON_HEIGHT + max_height_image - new_height) / 2)
 
         img = ImageTk.PhotoImage(pil_image)
-        self.allready = self.create_image(new_x, new_y, image=img, anchor='nw', tag="bacl")
+        self.allready = self.create_image(new_x, new_y, image=img, anchor='nw', tag="back")
         self.image = img
 
         self.master.title("Image Viewer ({})".format(os.path.split(image_path)[-1]))
         self.update_image_counter_label()
         self.update_labels()
 
-    def copy_image_name_to_clipboard(self, event):
-        """
-        Take the current image path, and only look at the image name without the extension.
-        Put this value in the clipboard, so it can be pasted elsewhere.
-        """
-        # copy image data to clipboard
-        image_path = self.image_list[self.current_image_index]
-        image_name = os.path.split(image_path)[-1]
-        # file names can hold a point... so split on point to get the extension, but join the first part if needed
-        image_data = '.'.join(image_name.split('.')[:-1])
-        copy_to_clipboard(image_data)
+    # def copy_image_name_to_clipboard(self, event):
+    #     """
+    #     Take the current image path, and only look at the image name without the extension.
+    #     Put this value in the clipboard, so it can be pasted elsewhere.
+    #     """
+    #     # copy image data to clipboard
+    #     image_path = self.image_list[self.current_image_index]
+    #     image_name = os.path.split(image_path)[-1]
+    #     # file names can hold a point... so split on point to get the extension, but join the first part if needed
+    #     image_data = '.'.join(image_name.split('.')[:-1])
+    #     copy_to_clipboard(image_data)
 
     def _move_image_action(self, event):
         action_index = int(event.char) - 1
@@ -224,30 +216,30 @@ class ImageViewer(Canvas):
         self.current_image_index = (self.current_image_index + 1) % self.total_images
         self.show_image()
 
-    def undo_last_action(self, event):
-        if not self.last_actions:
-            return
-
-        last_action = self.last_actions.pop()
-        from_path = last_action['path']
-        action_index = last_action['action_index']
-        to_path = self.directory_path
-        # print('Put file back from {} to the {}'.format(from_path, to_path))
-
-        new_path = move_image(image_path=from_path, destination_dir=to_path)
-
-        if new_path:
-            self.image_list.insert(self.current_image_index, new_path)
-            self.total_images += 1
-            # dont change self.current_image
-            self.action_counts[action_index] -= 1
-            self.show_image()
-            self.update_labels(undo=True)  # explicitly do it again, so the label will get the undo color
+    # def undo_last_action(self, event):
+    #     if not self.last_actions:
+    #         return
+    #
+    #     last_action = self.last_actions.pop()
+    #     from_path = last_action['path']
+    #     action_index = last_action['action_index']
+    #     to_path = self.directory_path
+    #     # print('Put file back from {} to the {}'.format(from_path, to_path))
+    #
+    #     new_path = move_image(image_path=from_path, destination_dir=to_path)
+    #
+    #     if new_path:
+    #         self.image_list.insert(self.current_image_index, new_path)
+    #         self.total_images += 1
+    #         # dont change self.current_image
+    #         self.action_counts[action_index] -= 1
+    #         self.show_image()
+    #         self.update_labels(undo=True)  # explicitly do it again, so the label will get the undo color
 
     def update_image_counter_label(self):
         self.image_counter_label['text'] = ' {} / {} '.format(self.current_image_index + 1, self.total_images)
 
-    @property
+    @property #to use getters and setter
     def last_action_name(self):
         latest_action_dict = self.last_actions[-1] if self.last_actions else {}
         return latest_action_dict.get('action_name')
@@ -277,4 +269,3 @@ if __name__ == '__main__':
     main()
 
 
-# TODO: use relx rely for relative coordinates, so on window resize, the button position will change
